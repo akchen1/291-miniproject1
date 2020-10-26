@@ -24,13 +24,19 @@ public class Main {
         }};
     }
 
+    // TODO ALL THESE FUNCTIONS NEED TO DO THE LOGIC INDICATED
     public void postQuestion() {
         System.out.println("This is question example");
     }
     public void searchPost() {}
     public void answerPost() {}
     public void vote() {}
-    public void help() {}
+    public void help() {
+        System.out.println();
+        System.out.println(Constants.INTRO);
+        if(pUser)
+            System.out.println(Constants.P_INTRO);
+    }
     public void markAccepted() {}
     public void giveBadge() {}
     public void tag() {}
@@ -55,15 +61,17 @@ public class Main {
 //        System.out.println(pwd);
 
         // TODO CHECK DB FOR USERNAME
+        // TODO ALSO NEED TO SET IF PUSER PRIVILEGED
         dbController.getUser();
+        pUser = false;
 
-        pUser = true;
         return true;
     }
 
     public void show() {
         while(!attemptLogin());
 
+        System.out.println();
         System.out.println(Constants.INTRO);
         if(pUser)
             System.out.println(Constants.P_INTRO);
@@ -77,6 +85,11 @@ public class Main {
         }
     }
 
+    /**
+     * return true if you want to exit the program false otherwise
+     * @param in
+     * @return
+     */
     public boolean parseInput(String in) {
         if(in.compareTo("exit") == 0)
             return true;
@@ -85,6 +98,11 @@ public class Main {
         Method m = cmds.get(in);
         if(m == null) {
             System.out.println(Constants.INVALID_INPUT);
+            return false;
+        }
+        // do a check if the user can use the command
+        if(!pUser && Constants.PRIVILEGED_CMDS.contains(in)) {
+            System.out.println(Constants.INVALID_PRIVILEGE);
             return false;
         }
 
@@ -112,6 +130,7 @@ public class Main {
         }
         assert mainView != null;
         mainView.show();
+        System.out.println();
         System.out.println(Constants.EXIT_MESSAGE);
     }
 

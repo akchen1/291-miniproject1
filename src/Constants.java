@@ -35,4 +35,8 @@ public abstract class Constants {
             "       )88                                           )88       \n" +
             "      ,88P                                          ,d8P       \n" +
             "  `?8888P                                        `?888P'       ";
+
+    public static final String PRIVILEGED_CMDS = "mbte";
+
+    public static final String INVALID_PRIVILEGE = "YOU NEED ADMIN RIGHTS FOR THIS ACTION";
 }
