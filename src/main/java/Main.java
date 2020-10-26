@@ -3,7 +3,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class Main {
-    private DBController dbController = new DBController();
+    private final DBController dbController;
     static Scanner scanner = new Scanner(System.in);
 
     private boolean pUser = false;
@@ -11,7 +11,8 @@ public class Main {
     final HashMap<String, Method> cmds;
 
     public Main() throws NoSuchMethodException {
-        cmds = new HashMap<>(){{
+        dbController = new DBController();
+        cmds = new HashMap<String, Method>(){{
             put("p", Main.class.getMethod("postQuestion"));
             put("s", Main.class.getMethod("searchPost"));
             put("a", Main.class.getMethod("answerPost"));
@@ -25,6 +26,8 @@ public class Main {
     }
 
     // TODO ALL THESE FUNCTIONS NEED TO DO THE LOGIC INDICATED
+    // TODO : REMEMBER TO CHECK STRING LENGTH SO YOU CAN MAKE VALID QUERY
+    // TODO : OR A VALID ENTRY
     public void postQuestion() {
         System.out.println("This is question example");
     }
@@ -33,9 +36,9 @@ public class Main {
     public void vote() {}
     public void help() {
         System.out.println();
-        System.out.println(Constants.INTRO);
+        System.out.println(StringConstants.INTRO);
         if(pUser)
-            System.out.println(Constants.P_INTRO);
+            System.out.println(StringConstants.P_INTRO);
     }
     public void markAccepted() {}
     public void giveBadge() {}
@@ -50,9 +53,9 @@ public class Main {
      */
     public boolean attemptLogin() {
         System.out.println("Please login by entering your username, you will be prompted for your password after");
-        System.out.print("USERNAME: ");
+        System.out.print("UID: ");
 
-        String username = scanner.nextLine();
+        String uid = scanner.nextLine();
         // echo back username
 //        System.out.println(username);
         System.out.print("PASSWORD: ");
@@ -60,10 +63,14 @@ public class Main {
         // echo back pwd
 //        System.out.println(pwd);
 
-        // TODO CHECK DB FOR USERNAME
-        // TODO ALSO NEED TO SET IF PUSER PRIVILEGED
-        dbController.getUser();
-        pUser = false;
+        String dbPwd = dbController.getPwd(uid);
+        if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
+            System.out.println(StringConstants.INVALID_CREDS);
+            System.out.println();
+            return false;
+        }
+
+        pUser = dbController.isPrivileged(uid);
 
         return true;
     }
@@ -72,9 +79,9 @@ public class Main {
         while(!attemptLogin());
 
         System.out.println();
-        System.out.println(Constants.INTRO);
+        System.out.println(StringConstants.INTRO);
         if(pUser)
-            System.out.println(Constants.P_INTRO);
+            System.out.println(StringConstants.P_INTRO);
 
         String in;
         while(true) {   // main functional loop
@@ -97,12 +104,12 @@ public class Main {
         // get method from map
         Method m = cmds.get(in);
         if(m == null) {
-            System.out.println(Constants.INVALID_INPUT);
+            System.out.println(StringConstants.INVALID_INPUT);
             return false;
         }
         // do a check if the user can use the command
-        if(!pUser && Constants.PRIVILEGED_CMDS.contains(in)) {
-            System.out.println(Constants.INVALID_PRIVILEGE);
+        if(!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
+            System.out.println(StringConstants.INVALID_PRIVILEGE);
             return false;
         }
 
@@ -120,7 +127,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        System.out.println(Constants.LOGO);
+        System.out.println(StringConstants.LOGO);
         Main mainView = null;
         try {
             mainView = new Main();
@@ -131,7 +138,7 @@ public class Main {
         assert mainView != null;
         mainView.show();
         System.out.println();
-        System.out.println(Constants.EXIT_MESSAGE);
+        System.out.println(StringConstants.EXIT_MESSAGE);
     }
 
 }

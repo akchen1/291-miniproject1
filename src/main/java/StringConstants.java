@@ -1,4 +1,4 @@
-public abstract class Constants {
+public abstract class StringConstants {
     public static final String LOGO = "  ________.__            __    __           __________           .___  .___.__  __   \n" +
             " /  _____/|  |__   _____/  |__/  |_  ____   \\______   \\ ____   __| _/__| _/|__|/  |_ \n" +
             "/   \\  ___|  |  \\_/ __ \\   __\\   __\\/  _ \\   |       _// __ \\ / __ |/ __ | |  \\   __\\\n" +
@@ -39,4 +39,7 @@ public abstract class Constants {
     public static final String PRIVILEGED_CMDS = "mbte";
 
     public static final String INVALID_PRIVILEGE = "YOU NEED ADMIN RIGHTS FOR THIS ACTION";
+
+    public static final String INVALID_CREDS = "INCORRECT CREDENTIALS TRY AGAIN";
+
 }
