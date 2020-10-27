@@ -1,4 +1,7 @@
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Calendar;
 
 
 public class DBController {
@@ -42,8 +45,69 @@ public class DBController {
         return pwd;
     }
 
-    // TODO
+    /**
+     * Returns null if no such uid exists
+     * @param uid
+     * @return
+     */
+    public String getUid(String uid) {
+        String uidQueryString =
+                "select uid from users where uid=?";
+        String resId = null;
+
+        try(PreparedStatement pwdStatement = conn.prepareStatement(uidQueryString)) {
+            pwdStatement.setString(1, uid);
+            ResultSet res = pwdStatement.executeQuery();
+            if(res.next()) {
+                resId = res.getString(1);
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return resId;
+    }
+
+    public void insertUser(String[] details) {
+        String insertUserQuery = "INSERT INTO users values(?, ?, ?, ?, ?);";
+        Date date = new Date(System.currentTimeMillis());
+        try (PreparedStatement insertUserStatement = conn.prepareStatement(insertUserQuery)) {
+            insertUserStatement.setString(1, details[0]);
+            insertUserStatement.setString(2, details[1]);
+            insertUserStatement.setString(3, details[2]);
+            insertUserStatement.setString(4, details[3]);
+            insertUserStatement.setDate(5, date);
+            insertUserStatement.execute();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("could not insert into users", throwables);
+        }
+    }
+
+
     public boolean isPrivileged(String uid) {
+        String checkPrivilegedQueryString =
+                "select uid from privileged where uid=?";
+
+        String retId;
+
+        try(PreparedStatement pwdStatement = conn.prepareStatement(checkPrivilegedQueryString)) {
+            pwdStatement.setString(1, uid);
+            ResultSet res = pwdStatement.executeQuery();
+            if(res.next()) {
+                retId = res.getString(1);
+            } else {
+                return false;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
         return true;
     }
 
