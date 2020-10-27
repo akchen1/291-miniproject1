@@ -47,5 +47,26 @@ public class DBController {
         return true;
     }
 
+    public boolean postQuestion(String pid, Date date, String title, String body, String poster) {
+        String insertPostsQuery = "INSERT INTO posts values(?, ?, ?, ?, ?);";
+        String insertQuestionsQuery = "INSERT INTO questions values(?, ?);";
+        try (PreparedStatement insertPostsStatement = conn.prepareStatement(insertPostsQuery);
+            PreparedStatement insertQuestionsStatement = conn.prepareStatement(insertQuestionsQuery)) {
+            insertPostsStatement.setString(1, pid);
+            insertPostsStatement.setDate(2, date);
+            insertPostsStatement.setString(3, title);
+            insertPostsStatement.setString(4, body);
+            insertPostsStatement.setString(5, poster);
+            insertQuestionsStatement.setString(1, pid);
+            insertQuestionsStatement.setString(2, null);
 
+            // TODO maybe merge statements so both need to pass for it to work look into rollback
+            Boolean result1 = insertPostsStatement.execute();
+            Boolean result2 = insertQuestionsStatement.execute();
+            return result1 && result2;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("Insert into posts failed", throwables);
+        }
+    }
 }

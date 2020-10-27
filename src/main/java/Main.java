@@ -1,4 +1,5 @@
 import java.lang.reflect.Method;
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -7,6 +8,7 @@ public class Main {
     static Scanner scanner = new Scanner(System.in);
 
     private boolean pUser = false;
+    private String currentUserUID;
 
     final HashMap<String, Method> cmds;
 
@@ -29,9 +31,20 @@ public class Main {
     // TODO : REMEMBER TO CHECK STRING LENGTH SO YOU CAN MAKE VALID QUERY
     // TODO : OR A VALID ENTRY
     public void postQuestion() {
-        System.out.println("This is question example");
+        System.out.print("Enter a title: ");
+        String title = scanner.nextLine();
+        System.out.print("Enter a body");
+        String body = scanner.nextLine();
+
+        Date date = Utils.getSQLDate();
+        Boolean status = dbController.postQuestion(Utils.generateID(4), date, title, body, currentUserUID);
+        // TODO what to do if fail
     }
-    public void searchPost() {}
+
+    public void searchPost() {
+        System.out.print("Search Keywords: ");
+        String keywords = scanner.nextLine();
+    }
     public void answerPost() {}
     public void vote() {}
     public void help() {
@@ -56,6 +69,7 @@ public class Main {
         System.out.print("UID: ");
 
         String uid = scanner.nextLine();
+        currentUserUID = uid;
         // echo back username
 //        System.out.println(username);
         System.out.print("PASSWORD: ");
