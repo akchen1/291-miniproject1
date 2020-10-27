@@ -27,7 +27,7 @@ public class DBController {
      */
     public String getPwd(String uid) {
         String pwdQueryString =
-                "select pwd from users where uid=?";
+                "select pwd from users where uid like ?";
         String pwd = null;
 
         try(PreparedStatement pwdStatement = conn.prepareStatement(pwdQueryString)) {
@@ -52,7 +52,7 @@ public class DBController {
      */
     public String getUid(String uid) {
         String uidQueryString =
-                "select uid from users where uid=?";
+                "select uid from users where uid like ?";
         String resId = null;
 
         try(PreparedStatement pwdStatement = conn.prepareStatement(uidQueryString)) {
@@ -72,13 +72,14 @@ public class DBController {
 
     public void insertUser(String[] details) {
         String insertUserQuery = "INSERT INTO users values(?, ?, ?, ?, ?);";
-        Date date = new Date(System.currentTimeMillis());
+        Date date = new Date(Calendar.getInstance().getTime().getTime());
+        SimpleDateFormat formatter = new SimpleDateFormat("yyy-MM-dd");
         try (PreparedStatement insertUserStatement = conn.prepareStatement(insertUserQuery)) {
             insertUserStatement.setString(1, details[0]);
             insertUserStatement.setString(2, details[1]);
             insertUserStatement.setString(3, details[2]);
             insertUserStatement.setString(4, details[3]);
-            insertUserStatement.setDate(5, date);
+            insertUserStatement.setString(5, formatter.format(date));
             insertUserStatement.execute();
 
         } catch (SQLException throwables) {
@@ -90,7 +91,7 @@ public class DBController {
 
     public boolean isPrivileged(String uid) {
         String checkPrivilegedQueryString =
-                "select uid from privileged where uid=?";
+                "select uid from privileged where uid like ?";
 
         String retId;
 
