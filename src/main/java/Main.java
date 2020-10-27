@@ -54,7 +54,10 @@ public class Main {
             System.out.println(StringConstants.P_INTRO);
     }
     public void markAccepted() {}
-    public void giveBadge() {}
+
+    // badge name case insensitive
+    public void giveBadge() {
+    }
     public void tag() {}
     public void editPost() {}
 
@@ -69,15 +72,11 @@ public class Main {
         System.out.println("Please login by entering your username, you will be prompted for your password after");
         System.out.print("UID: ");
 
-        // we only allow lowercase for uid
-        String uid = scanner.nextLine().toLowerCase();
+        String uid = scanner.nextLine();
         currentUserUID = uid;
-        // echo back username
-//        System.out.println(username);
+
         System.out.print("PASSWORD: ");
         String pwd = scanner.nextLine();
-        // echo back pwd
-//        System.out.println(pwd);
 
         String dbPwd = dbController.getPwd(uid);
         if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
@@ -105,12 +104,12 @@ public class Main {
             System.out.print("UID: ");
             in = scanner.nextLine();
             in = in.toLowerCase();
-            if(in.length() < 5 && dbController.getUid(in) == null) {
+            if(in.length() > 0 && in.length() < 5 && dbController.getUid(in) == null) {
                 break;
             }
             System.out.println("Unfortunately that uid is invalid :( please try another");
         }
-
+        currentUserUID = in;
         details[0] = in;
         System.out.println("User name selected! Please enter your details");
         System.out.print("name: ");
