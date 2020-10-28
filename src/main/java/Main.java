@@ -9,6 +9,7 @@ public class Main {
 
     private boolean pUser = false;
     private String currentUserUID;
+    private Post selectedPost = new Post();
 
     final HashMap<String, Method> cmds;
 
@@ -56,7 +57,26 @@ public class Main {
     public void markAccepted() {}
 
     // badge name case insensitive
+    // *** REQUIRES SELECTED POST TO BE NOT NULL or EMPTY ***
     public void giveBadge() {
+        System.out.println("Give a user a badge by giving a proper badge name");
+        String bname;
+        while(true) {
+            System.out.print("Badge name: ");
+            String in = scanner.nextLine();
+            bname = dbController.getBadge(in);
+            if(bname == null) {
+                System.out.println("Exists no such badge :(");
+                continue;
+            }
+            else if(!dbController.checkUniqueBadge(bname, selectedPost.owner)) {
+                System.out.println("That badge has been given to this user today already!");
+                continue;
+            }
+            break;
+        }
+
+        dbController.giveBadge(bname, selectedPost.owner);
     }
     public void tag() {}
     public void editPost() {}
@@ -143,9 +163,11 @@ public class Main {
         }
     }
 
-
     public void show() {
         loginMenu();
+
+        // TODO DELETE AFTER
+        selectedPost.selectPost("p001", "mid1");
 
         System.out.println();
         System.out.println(StringConstants.INTRO);
@@ -156,7 +178,9 @@ public class Main {
         while(true) {   // main functional loop
             System.out.print("cmd: ");
             in = scanner.nextLine(); // wait for input
-            if(parseInput(in))
+            // TODO: ONLY PERMITTED HERE SHOULD BE ps because you need to
+            // TODO: search or make a post
+            if(parseInput(in, StringConstants.ALL_ACTIONS)) // only allow psm for this menu
                 break;
         }
     }
@@ -164,21 +188,31 @@ public class Main {
     /**
      * return true if you want to exit the program false otherwise
      * @param in
+     * @param permitted a list of permitted letters for this input
      * @return
      */
-    public boolean parseInput(String in) {
-        if(in.compareTo("exit") == 0)
+    public boolean parseInput(String in, String permitted) {
+        // invalid input or cannot use the command
+        if(in == null) {
+            System.out.println(StringConstants.INVALID_INPUT);
+            return false;
+        } else if (in.compareTo("exit") == 0) {
             return true;
+        } else if (in.compareTo("<") == 0) {
+            return false;
+        } else if (in.compareTo("help") == 0) { // always allowed
+        } if (!permitted.contains(in)) {
+            System.out.println(StringConstants.INVALID_INPUT);
+            return false;
+        } else if(!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
+            System.out.println(StringConstants.INVALID_PRIVILEGE);
+            return false;
+        }
 
         // get method from map
         Method m = cmds.get(in);
         if(m == null) {
             System.out.println(StringConstants.INVALID_INPUT);
-            return false;
-        }
-        // do a check if the user can use the command
-        if(!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
-            System.out.println(StringConstants.INVALID_PRIVILEGE);
             return false;
         }
 
