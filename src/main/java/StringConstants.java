@@ -14,6 +14,7 @@ public abstract class StringConstants {
             "a - answer a post\n" +
             "v - give a vote\n" +
             "h - view this help again\n" +
+            "< - back, does not work if already on main menu\n" +
             "exit - logout\n";
 
     public static final String P_INTRO = "Hello Admin.\n" +
@@ -37,6 +38,8 @@ public abstract class StringConstants {
             "  `?8888P                                        `?888P'       ";
 
     public static final String PRIVILEGED_CMDS = "mbte";
+    public static final String POST_ACTIONS = "avmbae";
+    public static final String ALL_ACTIONS = "psavhmbte";
 
     public static final String INVALID_PRIVILEGE = "YOU NEED ADMIN RIGHTS FOR THIS ACTION";
 
@@ -45,4 +48,6 @@ public abstract class StringConstants {
     public static final String LOGIN_MENU = "PLEASE INDICATE IF YOU ARE A REGISTERED USER\n" +
             "l - login\n" +
             "s - signup";
+
+
 }

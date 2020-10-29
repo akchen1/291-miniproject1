@@ -16,7 +16,6 @@ public class SortByKeywords implements Comparator<SearchResult> {
         int o2Counter = 0;
         for (int i = 0; i < keywords.length; i++) {
             String keyword = keywords[i].toLowerCase();
-            System.out.println(keyword);
             if (o1.body.toLowerCase().contains(keyword) || o1.title.toLowerCase().contains(keyword) ||
                     (tags.containsKey(o1.pid) && tags.get(o1.pid).stream().anyMatch(keyword::equalsIgnoreCase))) {
                 o1Counter++;

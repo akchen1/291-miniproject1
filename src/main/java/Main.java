@@ -2,6 +2,7 @@ import java.lang.reflect.Method;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Scanner;
 
 public class Main {
@@ -10,6 +11,7 @@ public class Main {
 
     private boolean pUser = false;
     private String currentUserUID;
+    private Post selectedPost = new Post();
 
     final HashMap<String, Method> cmds;
 
@@ -42,17 +44,59 @@ public class Main {
         // TODO what to do if fail
     }
 
-    public void searchPost() {
+    private Iterator printSearch(Iterator iterator) {
+        int counter = 0;
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
+            counter++;
+            if (counter == 5) {
+                break;
+            }
+        }
+        return iterator;
+    }
+
+    public String searchPost() {
         System.out.print("Search Keywords: ");
         String keywords = scanner.nextLine();
         String[] splitKeywords = keywords.split(",");
         if (splitKeywords.length == 0) {
-            return;
+            return null;
         }
 
         ArrayList<SearchResult> searchResults = dbController.search(splitKeywords);
-        for (int i = 0; i < searchResults.size(); i++) {
-            System.out.println(searchResults.get(i));
+        Iterator iterator = searchResults.iterator();
+        System.out.println("Displaying first 5 results.");
+        System.out.println("q to quit, > for next page, s to select a post");
+        iterator = printSearch(iterator);
+        Boolean done = false;
+        while (true) {
+            if (!iterator.hasNext() && !done) {
+                System.out.println("End of search results");
+                done = true;
+            }
+            String input = scanner.nextLine();
+            if (input.toLowerCase().compareTo("q") == 0) {
+                return null;
+            } else if (input.toLowerCase().compareTo(">") == 0 && !done) {
+                if (done) {
+                    System.out.println("End of search results");
+                } else {
+                    iterator = printSearch(iterator);
+                }
+            } else if (input.toLowerCase().compareTo("s") == 0) {
+                System.out.println("Enter the id of the post you want to select");
+                String post = scanner.nextLine();
+                if (searchResults.stream().anyMatch((searchResult -> {return searchResult.pid.toLowerCase().compareTo(post) == 0;}))) {
+                    System.out.println(post + "Selected");
+                    return post;
+                } else {
+                    System.out.println("Selected post does not exist. Start search again.");
+                }
+            } else {
+                System.out.println("Invalid input");
+                System.out.println("q to quit, > for next page, s to select a post");
+            }
         }
     }
     public void answerPost() {}
@@ -66,7 +110,26 @@ public class Main {
     public void markAccepted() {}
 
     // badge name case insensitive
+    // *** REQUIRES SELECTED POST TO BE NOT NULL or EMPTY ***
     public void giveBadge() {
+        System.out.println("Give a user a badge by giving a proper badge name");
+        String bname;
+        while(true) {
+            System.out.print("Badge name: ");
+            String in = scanner.nextLine();
+            bname = dbController.getBadge(in);
+            if(bname == null) {
+                System.out.println("Exists no such badge :(");
+                continue;
+            }
+            else if(!dbController.checkUniqueBadge(bname, selectedPost.owner)) {
+                System.out.println("That badge has been given to this user today already!");
+                continue;
+            }
+            break;
+        }
+
+        dbController.giveBadge(bname, selectedPost.owner);
     }
     public void tag() {}
     public void editPost() {}
@@ -153,9 +216,11 @@ public class Main {
         }
     }
 
-
     public void show() {
         loginMenu();
+
+        // TODO DELETE AFTER
+        selectedPost.selectPost("p001", "mid1");
 
         System.out.println();
         System.out.println(StringConstants.INTRO);
@@ -166,7 +231,9 @@ public class Main {
         while(true) {   // main functional loop
             System.out.print("cmd: ");
             in = scanner.nextLine(); // wait for input
-            if(parseInput(in))
+            // TODO: ONLY PERMITTED HERE SHOULD BE ps because you need to
+            // TODO: search or make a post
+            if(parseInput(in, StringConstants.ALL_ACTIONS)) // only allow psm for this menu
                 break;
         }
     }
@@ -174,21 +241,31 @@ public class Main {
     /**
      * return true if you want to exit the program false otherwise
      * @param in
+     * @param permitted a list of permitted letters for this input
      * @return
      */
-    public boolean parseInput(String in) {
-        if(in.compareTo("exit") == 0)
+    public boolean parseInput(String in, String permitted) {
+        // invalid input or cannot use the command
+        if(in == null) {
+            System.out.println(StringConstants.INVALID_INPUT);
+            return false;
+        } else if (in.compareTo("exit") == 0) {
             return true;
+        } else if (in.compareTo("<") == 0) {
+            return false;
+        } else if (in.compareTo("help") == 0) { // always allowed
+        } if (!permitted.contains(in)) {
+            System.out.println(StringConstants.INVALID_INPUT);
+            return false;
+        } else if(!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
+            System.out.println(StringConstants.INVALID_PRIVILEGE);
+            return false;
+        }
 
         // get method from map
         Method m = cmds.get(in);
         if(m == null) {
             System.out.println(StringConstants.INVALID_INPUT);
-            return false;
-        }
-        // do a check if the user can use the command
-        if(!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
-            System.out.println(StringConstants.INVALID_PRIVILEGE);
             return false;
         }
 

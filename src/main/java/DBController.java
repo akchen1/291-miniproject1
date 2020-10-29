@@ -1,14 +1,15 @@
 import java.sql.*;
 import java.sql.Date;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.*;
-
+import java.util.Calendar;
 
 public class DBController {
     private final String driverName = "org.sqlite.JDBC";
     private final String dbUrl = "jdbc:sqlite:sql/database.db";
     Connection conn;
+    SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
     public DBController() {
         try {
@@ -74,13 +75,12 @@ public class DBController {
     public void insertUser(String[] details) {
         String insertUserQuery = "INSERT INTO users values(?, ?, ?, ?, ?);";
         Date date = new Date(Calendar.getInstance().getTime().getTime());
-        SimpleDateFormat formatter = new SimpleDateFormat("yyy-MM-dd");
         try (PreparedStatement insertUserStatement = conn.prepareStatement(insertUserQuery)) {
             insertUserStatement.setString(1, details[0]);
             insertUserStatement.setString(2, details[1]);
             insertUserStatement.setString(3, details[2]);
             insertUserStatement.setString(4, details[3]);
-            insertUserStatement.setString(5, formatter.format(date));
+            insertUserStatement.setString(5, dateFormatter.format(date));
             insertUserStatement.execute();
 
         } catch (SQLException throwables) {
@@ -88,7 +88,6 @@ public class DBController {
             throw new RuntimeException("could not insert into users", throwables);
         }
     }
-
 
     public boolean isPrivileged(String uid) {
         String checkPrivilegedQueryString =
@@ -172,7 +171,12 @@ public class DBController {
             while (result.next()) {
                 String pid = result.getString("pid");
                 tags.put(pid, new ArrayList<String>());
-                Date date = result.getDate("pdate");
+                Date date;
+                try {
+                    date = new Date(dateFormatter.parse(result.getString("pdate")).getTime());
+                } catch (ParseException e) {
+                    date = result.getDate("pdate");
+                }
                 String title = result.getString("title");
                 String body = result.getString("body");
                 String poster = result.getString("poster");
@@ -198,6 +202,76 @@ public class DBController {
         } catch (SQLException throwables) {
             throwables.printStackTrace();
             throw new RuntimeException("Search failed", throwables);
+        }
+    }
+
+
+    /**
+     * Checks if the badge exists, returns null if no such badge
+     * else return the badge name
+     * @param bname
+     * @return
+     */
+    public String getBadge(String bname) {
+        String getBadgeQuery =
+                "select bname from badges where bname like ?";
+        String badge = null;
+
+        try(PreparedStatement badgeStatement = conn.prepareStatement(getBadgeQuery)) {
+            badgeStatement.setString(1, bname);
+            ResultSet res = badgeStatement.executeQuery();
+            if(res.next()) {
+                badge = res.getString(1);
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return badge;
+    }
+
+    public boolean giveBadge(String bname, String uid) {
+        String giveBadgeQuery =
+                "insert into ubadges values(?, ?, ?)";
+
+        Date date = new Date(Calendar.getInstance().getTime().getTime());
+        try(PreparedStatement badgeStatement = conn.prepareStatement(giveBadgeQuery)) {
+            badgeStatement.setString(1, uid);
+            badgeStatement.setString(2, dateFormatter.format(date));
+            badgeStatement.setString(3, bname);
+            return badgeStatement.execute();
+//            ResultSet res = badgeStatement.executeQuery();
+//            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+    }
+
+    public boolean checkUniqueBadge(String bname, String uid) {
+        String checkBadgeQuery =
+                "select * from ubadges where uid like ? and bdate like ? and bname like ?";
+
+        Date date = new Date(Calendar.getInstance().getTime().getTime());
+        try(PreparedStatement badgeStatement = conn.prepareStatement(checkBadgeQuery)) {
+            badgeStatement.setString(1, uid);
+            badgeStatement.setString(2, dateFormatter.format(date));
+            badgeStatement.setString(3, bname);
+            ResultSet res = badgeStatement.executeQuery();
+            if(res.next()) {    // exists entry
+                System.out.println("this has smth");
+                res.close();
+                return false;
+            } else {
+                System.out.println("no more");
+                res.close();
+                return true;
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
         }
     }
 
