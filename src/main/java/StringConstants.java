@@ -42,4 +42,7 @@ public abstract class StringConstants {
 
     public static final String INVALID_CREDS = "INCORRECT CREDENTIALS TRY AGAIN";
 
+    public static final String LOGIN_MENU = "PLEASE INDICATE IF YOU ARE A REGISTERED USER\n" +
+            "l - login\n" +
+            "s - signup";
 }

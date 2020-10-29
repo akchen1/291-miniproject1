@@ -1,4 +1,8 @@
 import java.sql.*;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.*;
 
 
 public class DBController {
@@ -24,7 +28,7 @@ public class DBController {
      */
     public String getPwd(String uid) {
         String pwdQueryString =
-                "select pwd from users where uid=?";
+                "select pwd from users where uid like ?";
         String pwd = null;
 
         try(PreparedStatement pwdStatement = conn.prepareStatement(pwdQueryString)) {
@@ -42,8 +46,70 @@ public class DBController {
         return pwd;
     }
 
-    // TODO
+    /**
+     * Returns null if no such uid exists
+     * @param uid
+     * @return
+     */
+    public String getUid(String uid) {
+        String uidQueryString =
+                "select uid from users where uid like ?";
+        String resId = null;
+
+        try(PreparedStatement pwdStatement = conn.prepareStatement(uidQueryString)) {
+            pwdStatement.setString(1, uid);
+            ResultSet res = pwdStatement.executeQuery();
+            if(res.next()) {
+                resId = res.getString(1);
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return resId;
+    }
+
+    public void insertUser(String[] details) {
+        String insertUserQuery = "INSERT INTO users values(?, ?, ?, ?, ?);";
+        Date date = new Date(Calendar.getInstance().getTime().getTime());
+        SimpleDateFormat formatter = new SimpleDateFormat("yyy-MM-dd");
+        try (PreparedStatement insertUserStatement = conn.prepareStatement(insertUserQuery)) {
+            insertUserStatement.setString(1, details[0]);
+            insertUserStatement.setString(2, details[1]);
+            insertUserStatement.setString(3, details[2]);
+            insertUserStatement.setString(4, details[3]);
+            insertUserStatement.setString(5, formatter.format(date));
+            insertUserStatement.execute();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("could not insert into users", throwables);
+        }
+    }
+
+
     public boolean isPrivileged(String uid) {
+        String checkPrivilegedQueryString =
+                "select uid from privileged where uid like ?";
+
+        String retId;
+
+        try(PreparedStatement pwdStatement = conn.prepareStatement(checkPrivilegedQueryString)) {
+            pwdStatement.setString(1, uid);
+            ResultSet res = pwdStatement.executeQuery();
+            if(res.next()) {
+                retId = res.getString(1);
+            } else {
+                return false;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
         return true;
     }
 
@@ -69,4 +135,70 @@ public class DBController {
             throw new RuntimeException("Insert into posts failed", throwables);
         }
     }
+
+    public ArrayList<SearchResult> search(String[] keywords) {
+        String searchQuery = "SELECT posts.pid " +
+                "FROM posts LEFT OUTER JOIN tags on (posts.pid=tags.pid) " +
+                "WHERE ";
+        String template = "posts.title LIKE ? or posts.body LIKE ? or tags.tag LIKE ? ";
+        for (int i = 0; i < keywords.length; i++) {
+            searchQuery += template;
+            if (i == 0) {
+                template = "or " + template;
+            }
+        }
+        searchQuery += "GROUP BY posts.pid";
+
+        String countQuery = "SELECT p.pid, p.pdate, p.title, p.body, p.poster, count(DISTINCT answers.pid) as numAns, count(DISTINCT votes.vno) as numVotes " +
+                "FROM posts p join (" + searchQuery + ") p1 on (p.pid=p1.pid) LEFT OUTER JOIN votes on (p1.pid=votes.pid) " +
+                "LEFT OUTER JOIN answers on (p1.pid=answers.qid) GROUP BY p.pid, p.pdate, p.title, p.body, p.poster;";
+
+        try (PreparedStatement searchStatement = conn.prepareStatement(countQuery)) {
+            int j = 1;
+            searchStatement.setString(j, keywords[0]);
+            for (int i = 0; i < keywords.length; i++) {
+                searchStatement.setString(j, "%"+keywords[i]+"%");
+                j++;
+                searchStatement.setString(j, "%"+keywords[i]+"%");
+                j++;
+                searchStatement.setString(j, "%"+keywords[i]+"%");
+                j++;
+            }
+
+
+            ResultSet result = searchStatement.executeQuery();
+            ArrayList<SearchResult> searchResults = new ArrayList<>();
+            Map<String, ArrayList<String>> tags = new HashMap<>();
+            while (result.next()) {
+                String pid = result.getString("pid");
+                tags.put(pid, new ArrayList<String>());
+                Date date = result.getDate("pdate");
+                String title = result.getString("title");
+                String body = result.getString("body");
+                String poster = result.getString("poster");
+                Integer numAns = result.getInt("numAns");
+                Integer numVote = result.getInt("numVotes");
+                searchResults.add(new SearchResult(pid, date, title, body, poster, numAns, numVote));
+            }
+            result.close();
+            String searchTags = "SELECT * FROM tags;";  // might change later to in (pids)
+            PreparedStatement statement = conn.prepareStatement(searchTags);
+            ResultSet resultTags = statement.executeQuery();
+            while (resultTags.next()) {
+                String pid = resultTags.getString("pid");
+                String tag = resultTags.getString("tag");
+                if (tags.containsKey(pid)) {
+                    tags.get(pid).add(tag);
+                }
+            }
+            resultTags.close();
+            searchResults.sort(new SortByKeywords(keywords, tags));
+
+            return searchResults;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("Search failed", throwables);
+        }
+    }
+
 }

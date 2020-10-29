@@ -1,5 +1,6 @@
 import java.lang.reflect.Method;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -44,6 +45,15 @@ public class Main {
     public void searchPost() {
         System.out.print("Search Keywords: ");
         String keywords = scanner.nextLine();
+        String[] splitKeywords = keywords.split(",");
+        if (splitKeywords.length == 0) {
+            return;
+        }
+
+        ArrayList<SearchResult> searchResults = dbController.search(splitKeywords);
+        for (int i = 0; i < searchResults.size(); i++) {
+            System.out.println(searchResults.get(i));
+        }
     }
     public void answerPost() {}
     public void vote() {}
@@ -54,7 +64,10 @@ public class Main {
             System.out.println(StringConstants.P_INTRO);
     }
     public void markAccepted() {}
-    public void giveBadge() {}
+
+    // badge name case insensitive
+    public void giveBadge() {
+    }
     public void tag() {}
     public void editPost() {}
 
@@ -64,18 +77,16 @@ public class Main {
      * Also needs to check if the user is privilege
      * @return
      */
+    // TODO HIDE PASSWORD IN LOGIN
     public boolean attemptLogin() {
         System.out.println("Please login by entering your username, you will be prompted for your password after");
         System.out.print("UID: ");
 
         String uid = scanner.nextLine();
         currentUserUID = uid;
-        // echo back username
-//        System.out.println(username);
+
         System.out.print("PASSWORD: ");
         String pwd = scanner.nextLine();
-        // echo back pwd
-//        System.out.println(pwd);
 
         String dbPwd = dbController.getPwd(uid);
         if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
@@ -89,8 +100,62 @@ public class Main {
         return true;
     }
 
+    /**
+     * Registers a user
+     */
+    // TODO HIDE PASSWORD IN REGISTER
+    public void registerUser() {
+        System.out.println("Please provide a uid. Uids must be 4 chars long and are case-insensitive");
+        String in;
+        // order of uid, name, city, pwd
+        String[] details = new String[4];
+
+        while(true) {
+            System.out.print("UID: ");
+            in = scanner.nextLine();
+            in = in.toLowerCase();
+            if(in.length() > 0 && in.length() < 5 && dbController.getUid(in) == null) {
+                break;
+            }
+            System.out.println("Unfortunately that uid is invalid :( please try another");
+        }
+        currentUserUID = in;
+        details[0] = in;
+        System.out.println("User name selected! Please enter your details");
+        System.out.print("name: ");
+        scanner.nextLine();
+        details[1] = in;
+        System.out.print("city: ");
+        scanner.nextLine();
+        details[2] = in;
+        System.out.print("pwd: ");
+        scanner.nextLine();
+        details[3] = in;
+
+        dbController.insertUser(details);
+        System.out.println("Thanks for signing up, enjoy your stay.");
+    }
+
+    public void loginMenu() {
+        String in;
+        System.out.println(StringConstants.LOGIN_MENU);
+
+        while(true) {
+            System.out.print("cmd: ");
+            in = scanner.nextLine();
+            if(in.compareTo("l") == 0) {
+                while(!attemptLogin());
+                return;
+            } else if(in.compareTo("s") == 0) {
+                registerUser();
+                return;
+            }
+        }
+    }
+
+
     public void show() {
-        while(!attemptLogin());
+        loginMenu();
 
         System.out.println();
         System.out.println(StringConstants.INTRO);
