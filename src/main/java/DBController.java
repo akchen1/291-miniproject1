@@ -135,6 +135,31 @@ public class DBController {
         }
     }
 
+    public boolean postAnswer(String qPid, String apid, String title, String body, String poster) {
+        String insertPostsQuery = "INSERT INTO posts values(?, ?, ?, ?, ?)";
+        String insertAnswerQuery = "INSERT INTO answers values(?, ?)";
+        Date date = new Date(Calendar.getInstance().getTime().getTime());
+        try (PreparedStatement insertPostStatement = conn.prepareStatement(insertPostsQuery);
+             PreparedStatement insertAnswerStatement = conn.prepareStatement(insertAnswerQuery)) {
+            insertPostStatement.setString(1, apid);
+            insertPostStatement.setString(2, dateFormatter.format(date));
+            insertPostStatement.setString(3, title);
+            insertPostStatement.setString(4, body);
+            insertPostStatement.setString(5, poster);
+            insertAnswerStatement.setString(1, apid);
+            insertAnswerStatement.setString(2, qPid);
+
+            // TODO maybe merge statements so both need to pass for it to work look into rollback
+            Boolean result1 = insertPostStatement.execute();
+            Boolean result2 = insertAnswerStatement.execute();
+            return result1 && result2;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("Insert into posts failed for answers", throwables);
+        }
+    }
+
+
     public ArrayList<SearchResult> search(String[] keywords) {
         String searchQuery = "SELECT posts.pid " +
                 "FROM posts LEFT OUTER JOIN tags on (posts.pid=tags.pid) " +
@@ -205,6 +230,29 @@ public class DBController {
         }
     }
 
+    /**
+     * @param pid
+     * @return
+     */
+    public Post getPost(String pid) {
+        String getPostQuery =
+                "select * from posts where pid like ?";
+        Post post = null;
+
+        try(PreparedStatement badgeStatement = conn.prepareStatement(getPostQuery)) {
+            badgeStatement.setString(1, pid);
+            ResultSet res = badgeStatement.executeQuery();
+            if(res.next()) {
+                post = new Post(res.getString(1), res.getString(5));
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return post;
+    }
 
     /**
      * Checks if the badge exists, returns null if no such badge

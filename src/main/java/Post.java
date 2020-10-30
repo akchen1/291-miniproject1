@@ -6,6 +6,11 @@ public class Post {
     // Object to store post so it's easier to do selections on it
     public Post() {}
 
+    public Post(String pid, String owner) {
+        this.pid = pid;
+        this.owner = owner;
+    }
+
     public void selectPost(String pid, String owner) {
         this.pid = pid;
         this.owner = owner;
