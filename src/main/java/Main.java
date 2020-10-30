@@ -133,7 +133,19 @@ public class Main {
         System.out.println("Successful post thanks for answering the question!");
     }
 
-    public void vote() {}
+    public void vote() {
+        // vote increments from the earliest vote recv.
+        if(dbController.checkVoted(selectedPost.pid, currentUserUID)) {
+            System.out.println("Cannot give vote because you already have given your vote to " + selectedPost.pid);
+            return;
+        }
+
+        int largestVno = dbController.getLargestVno(selectedPost.pid);
+        dbController.giveVote(selectedPost.pid, largestVno+1, currentUserUID);
+
+        System.out.println("Thanks for casting your vote!~");
+    }
+
     public void help() {
         System.out.println();
         System.out.println(StringConstants.INTRO);
