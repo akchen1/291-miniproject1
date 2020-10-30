@@ -290,11 +290,26 @@ public class DBController {
             badgeStatement.setString(2, dateFormatter.format(date));
             badgeStatement.setString(3, bname);
             return badgeStatement.execute();
-//            ResultSet res = badgeStatement.executeQuery();
-//            res.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
             throw new RuntimeException("QUERY FAILED", throwables);
+        }
+    }
+
+    public boolean giveVote(String pid, int vno, String voteGiver) {
+        String giveVoteQuery =
+                "insert into votes values(?, ?, ?, ?)";
+
+        Date date = new Date(Calendar.getInstance().getTime().getTime());
+        try(PreparedStatement badgeStatement = conn.prepareStatement(giveVoteQuery)) {
+            badgeStatement.setString(1, pid);
+            badgeStatement.setInt(2, vno);
+            badgeStatement.setString(3, dateFormatter.format(date));
+            badgeStatement.setString(4, voteGiver);
+            return badgeStatement.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("Giving vote FAILED", throwables);
         }
     }
 
@@ -323,4 +338,50 @@ public class DBController {
         }
     }
 
+    public int getLargestVno(String pid) {
+        String getVnoQuery =
+                "select vno from votes where pid like ? order by vno desc";
+        int maxVno = 0;
+
+        try(PreparedStatement voteStatement = conn.prepareStatement(getVnoQuery)) {
+            voteStatement.setString(1, pid);
+            ResultSet res = voteStatement.executeQuery();
+            if(res.next()) {
+                maxVno = res.getInt(1);
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return maxVno;
+    }
+
+    /**
+     * Return true if you have voted on this post with uid
+     * @param pid
+     * @param uid
+     * @return
+     */
+    public boolean checkVoted(String pid, String uid) {
+        String getVoteMatchQuery =
+                "select * from votes where pid like ? and uid like ?";
+
+        try(PreparedStatement voteStatement = conn.prepareStatement(getVoteMatchQuery)) {
+            voteStatement.setString(1, pid);
+            voteStatement.setString(2, uid);
+            ResultSet res = voteStatement.executeQuery();
+            if(res.next()) {
+                res.close();
+                return true;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return false;
+    }
 }
