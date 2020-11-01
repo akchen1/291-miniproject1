@@ -238,7 +238,8 @@ public class Main {
         System.out.print("city: ");
         scanner.nextLine();
         details[2] = in;
-        System.out.print("pwd: ");
+        Console console = System.console();
+        char[] pass = console.readPassword("pwd: ");
         scanner.nextLine();
         details[3] = in;
 
