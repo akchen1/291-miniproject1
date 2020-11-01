@@ -36,12 +36,20 @@ public class Main {
     public void postQuestion() {
         System.out.print("Enter a title: ");
         String title = scanner.nextLine();
-        System.out.print("Enter a body");
+        System.out.print("Enter a body: ");
         String body = scanner.nextLine();
+
+        String genPid = Utils.generateID(4);
+        Post checkPost = dbController.getPost(genPid);
+        while(checkPost != null) {
+            genPid = Utils.generateID(4);
+            checkPost = dbController.getPost(genPid);
+        }
 
         Date date = Utils.getSQLDate();
         Boolean status = dbController.postQuestion(Utils.generateID(4), date, title, body, currentUserUID);
         // TODO what to do if fail
+        System.out.println("Thanks for posting your question!");
     }
 
     private Iterator printSearch(Iterator iterator) {
@@ -56,12 +64,12 @@ public class Main {
         return iterator;
     }
 
-    public String searchPost() {
+    public void searchPost() {
         System.out.print("Search Keywords: ");
         String keywords = scanner.nextLine();
         String[] splitKeywords = keywords.split(",");
         if (splitKeywords.length == 0) {
-            return null;
+            return;
         }
 
         ArrayList<SearchResult> searchResults = dbController.search(splitKeywords);
@@ -77,7 +85,7 @@ public class Main {
             }
             String input = scanner.nextLine();
             if (input.toLowerCase().compareTo("q") == 0) {
-                return null;
+                return;
             } else if (input.toLowerCase().compareTo(">") == 0 && !done) {
                 if (done) {
                     System.out.println("End of search results");
@@ -87,9 +95,12 @@ public class Main {
             } else if (input.toLowerCase().compareTo("s") == 0) {
                 System.out.println("Enter the id of the post you want to select");
                 String post = scanner.nextLine();
-                if (searchResults.stream().anyMatch((searchResult -> {return searchResult.pid.toLowerCase().compareTo(post) == 0;}))) {
-                    System.out.println(post + "Selected");
-                    return post;
+                if (searchResults.stream().anyMatch((searchResult -> { if(searchResult.pid.toLowerCase().compareTo(post) == 0) {
+                    selectedPost.selectPost(searchResult.pid, searchResult.poster);
+                    return true;
+                } return false;}))) {
+                    System.out.println(post + " Selected");
+                    return;
                 } else {
                     System.out.println("Selected post does not exist. Start search again.");
                 }
@@ -99,8 +110,42 @@ public class Main {
             }
         }
     }
-    public void answerPost() {}
-    public void vote() {}
+
+    public void answerPost() {
+        if(selectedPost.pid == null) {
+            System.out.println("You never selected a valid post! Please search first");
+        }
+
+        System.out.print("Enter a title: ");
+        String title = scanner.nextLine();
+        System.out.print("Enter a body: ");
+        String body = scanner.nextLine();
+
+        // check if post exists
+        String genPid = Utils.generateID(4);
+        Post checkPost = dbController.getPost(genPid);
+        while(checkPost != null) {
+            genPid = Utils.generateID(4);
+            checkPost = dbController.getPost(genPid);
+        }
+
+        Boolean status = dbController.postAnswer(selectedPost.pid, genPid, title, body, currentUserUID);
+        System.out.println("Successful post thanks for answering the question!");
+    }
+
+    public void vote() {
+        // vote increments from the earliest vote recv.
+        if(dbController.checkVoted(selectedPost.pid, currentUserUID)) {
+            System.out.println("Cannot give vote because you already have given your vote to " + selectedPost.pid);
+            return;
+        }
+
+        int largestVno = dbController.getLargestVno(selectedPost.pid);
+        dbController.giveVote(selectedPost.pid, largestVno+1, currentUserUID);
+
+        System.out.println("Thanks for casting your vote!~");
+    }
+
     public void help() {
         System.out.println();
         System.out.println(StringConstants.INTRO);
