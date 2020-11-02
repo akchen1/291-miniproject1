@@ -384,4 +384,45 @@ public class DBController {
 
         return false;
     }
+
+    /**
+     * Check if tag exists on the pid
+     * @param tag
+     * @param pid
+     * @return
+     */
+    public void pushTag(String pid, String tag) {
+        String pushTagQuery =
+                "INSERT INTO tags values(?, ?)";
+
+        try(PreparedStatement existTagStatement = conn.prepareStatement(pushTagQuery)) {
+            existTagStatement.setString(1, pid);
+            existTagStatement.setString(2, tag);
+            existTagStatement.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+    }
+
+    public boolean existsTag(String pid, String tag) {
+        String getTagQuery =
+                "select * from tags where pid like ? and tag like ?";
+
+        try(PreparedStatement voteStatement = conn.prepareStatement(getTagQuery)) {
+            voteStatement.setString(1, pid);
+            voteStatement.setString(2, tag);
+            ResultSet res = voteStatement.executeQuery();
+            if(res.next()) {
+                res.close();
+                return true;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return false;
+    }
 }
