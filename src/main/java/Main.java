@@ -153,7 +153,33 @@ public class Main {
         if(pUser)
             System.out.println(StringConstants.P_INTRO);
     }
-    public void markAccepted() {}
+    public void markAccepted() {
+        if(selectedPost.pid == null) {
+            System.out.println("You never selected a valid post! Please search first");
+            return;
+        } else if (!dbController.checkIsAnswer(selectedPost.pid)) {
+            System.out.println("This selected post is a question not an answer");
+            return;
+        }
+
+        String[] qDetails = dbController.getAcceptedAnswer(selectedPost.pid);
+        if(qDetails[0] == null) {
+            System.out.println("Something went wrong when finding the question");
+            return;
+        }
+
+        if(qDetails[1] != null) {
+            System.out.println("Do you want to override the current accepted answer of " + qDetails[1] + " (enter n to decline)");
+            String in = scanner.nextLine();
+            if(in.compareTo("n") == 0 || in.compareTo("no") == 0) {
+                System.out.println("Rejected the change of the accepted answer");
+                return;
+            }
+        }
+
+        dbController.updateQuestion(qDetails[0], selectedPost.pid);
+        System.out.println("Updated the accepted answer of the question to " + selectedPost.pid);
+    }
 
     // badge name case insensitive
     // *** REQUIRES SELECTED POST TO BE NOT NULL or EMPTY ***
@@ -255,13 +281,13 @@ public class Main {
         details[0] = in;
         System.out.println("User name selected! Please enter your details");
         System.out.print("name: ");
-        scanner.nextLine();
+        in = scanner.nextLine();
         details[1] = in;
         System.out.print("city: ");
-        scanner.nextLine();
+        in = scanner.nextLine();
         details[2] = in;
         System.out.print("pwd: ");
-        scanner.nextLine();
+        in = scanner.nextLine();
         details[3] = in;
 
         dbController.insertUser(details);
