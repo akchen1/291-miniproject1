@@ -425,4 +425,61 @@ public class DBController {
 
         return false;
     }
+
+    public boolean checkIsAnswer(String pid) {
+        String getAnswerQuery =
+                "select * from answers where pid like ?";
+
+        try(PreparedStatement checkAnswerStatement = conn.prepareStatement(getAnswerQuery)) {
+            checkAnswerStatement.setString(1, pid);
+            ResultSet res = checkAnswerStatement.executeQuery();
+            if(res.next()) {
+                res.close();
+                return true;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return false;
+    }
+
+    // given an answer's pid, get the question's accepted answer and pid
+    // return array of question pid and question theaid
+    public String[] getAcceptedAnswer(String pid) {
+        String[] data = new String[2];
+        String getAcceptedAnswerQuery =
+                "select * from questions, answers where answers.pid like ? and answers.qid=questions.pid;";
+        try(PreparedStatement acceptedAnswerStatement = conn.prepareStatement(getAcceptedAnswerQuery)) {
+            acceptedAnswerStatement.setString(1, pid);
+            ResultSet res = acceptedAnswerStatement.executeQuery();
+            if(res.next()) {
+                data[0] = res.getString(1);
+                data[1] = res.getString(2);
+                res.close();
+                return data;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+
+        return data;
+    }
+
+    public void updateQuestion(String qid, String theaid) {
+        String updateQuestionQuery =
+                "update questions set theaid=? where pid like ?";
+        try(PreparedStatement updateQuestionStatement = conn.prepareStatement(updateQuestionQuery)) {
+            updateQuestionStatement.setString(1, theaid);
+            updateQuestionStatement.setString(2, qid);
+            updateQuestionStatement.executeUpdate();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+    }
 }
