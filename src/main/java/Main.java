@@ -218,7 +218,6 @@ public class Main {
         String uid = scanner.nextLine();
         currentUserUID = uid;
 
-        System.out.print("PASSWORD: ");
 	Console console = System.console();
         String pwd = new String(console.readPassword("PASSWORD: ")); 
 
@@ -257,14 +256,14 @@ public class Main {
         details[0] = in;
         System.out.println("User name selected! Please enter your details");
         System.out.print("name: ");
-        scanner.nextLine();
+        in = scanner.nextLine();
         details[1] = in;
         System.out.print("city: ");
-        scanner.nextLine();
+        in = scanner.nextLine();
         details[2] = in;
-        Console console = System.console();
-        char[] pass = console.readPassword("pwd: ");
-        scanner.nextLine();
+	Console console = System.console();
+        String pass = new String(console.readPassword("pwd: "));
+	in = scanner.nextLine();
         details[3] = in;
 
         dbController.insertUser(details);
