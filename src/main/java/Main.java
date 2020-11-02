@@ -233,10 +233,10 @@ public class Main {
         System.out.print("name: ");
         scanner.nextLine();
         details[1] = in;
-        System.out.print("city: ");
-        scanner.nextLine();
-        details[2] = in;
         System.out.print("pwd: ");
+        in = scanner.nextLine();
+        details[2] = in;
+        System.out.print("city: ");
         scanner.nextLine();
         details[3] = in;
 
