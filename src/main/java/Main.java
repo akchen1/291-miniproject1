@@ -114,6 +114,7 @@ public class Main {
     public void answerPost() {
         if(selectedPost.pid == null) {
             System.out.println("You never selected a valid post! Please search first");
+            return;
         }
 
         System.out.print("Enter a title: ");
@@ -157,6 +158,10 @@ public class Main {
     // badge name case insensitive
     // *** REQUIRES SELECTED POST TO BE NOT NULL or EMPTY ***
     public void giveBadge() {
+        if(selectedPost.pid == null) {
+            System.out.println("You never selected a valid post! Please search first");
+            return;
+        }
         System.out.println("Give a user a badge by giving a proper badge name");
         String bname;
         while(true) {
@@ -176,7 +181,26 @@ public class Main {
 
         dbController.giveBadge(bname, selectedPost.owner);
     }
-    public void tag() {}
+    public void tag() {
+        if(selectedPost.pid == null) {
+            System.out.println("You never selected a valid post! Please search first!");
+            return;
+        }
+        System.out.println("Give selected post a tag!");
+        while(true) {
+            System.out.print("Tag: ");
+            String in = scanner.nextLine();
+
+            if(dbController.existsTag(selectedPost.pid, in)) {
+                System.out.println("Already exists this tag for this post, enter another");
+                continue;
+            } else {
+                dbController.pushTag(selectedPost.pid, in);
+            }
+            System.out.println("Added the tag to " + selectedPost.pid);
+            return;
+        }
+    }
     public void editPost() {}
 
     /**
@@ -265,7 +289,7 @@ public class Main {
         loginMenu();
 
         // TODO DELETE AFTER
-        selectedPost.selectPost("p001", "mid1");
+//        selectedPost.selectPost("p001", "mid1");
 
         System.out.println();
         System.out.println(StringConstants.INTRO);
