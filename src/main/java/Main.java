@@ -252,19 +252,6 @@ public class Main {
             }
             System.out.println("Unfortunately that uid is invalid :( please try another");
         }
-        currentUserUID = in;
-        details[0] = in;
-        System.out.println("User name selected! Please enter your details");
-        System.out.print("name: ");
-        in = scanner.nextLine();
-        details[1] = in;
-        System.out.print("city: ");
-        in = scanner.nextLine();
-        details[2] = in;
-	Console console = System.console();
-        String pass = new String(console.readPassword("pwd: "));
-	in = scanner.nextLine();
-        details[3] = in;
 
         dbController.insertUser(details);
         System.out.println("Thanks for signing up, enjoy your stay.");
