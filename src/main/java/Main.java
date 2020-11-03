@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
+import java.io.Console;
 
 public class Main {
     private final DBController dbController;
@@ -277,7 +278,8 @@ public class Main {
         currentUserUID = uid;
 
         System.out.print("PASSWORD: ");
-        String pwd = scanner.nextLine();
+	Console console = System.console();
+        String pwd = new String(console.readPassword("PASSWORD: ")); 
 
         String dbPwd = dbController.getPwd(uid);
         if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
