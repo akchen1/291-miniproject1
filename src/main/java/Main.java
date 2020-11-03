@@ -1,3 +1,4 @@
+import java.io.Console;
 import java.lang.reflect.Method;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -277,10 +278,8 @@ public class Main {
         String uid = scanner.nextLine();
         currentUserUID = uid;
 
-        System.out.print("PASSWORD: ");
-	Console console = System.console();
-        String pwd = new String(console.readPassword("PASSWORD: ")); 
-
+        Console cnsl = System.console();
+        String pwd = new String(cnsl.readPassword("PASSWORD: ")); 
         String dbPwd = dbController.getPwd(uid);
         if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
             System.out.println(StringConstants.INVALID_CREDS);
@@ -318,8 +317,9 @@ public class Main {
         System.out.print("name: ");
         in = scanner.nextLine();
         details[1] = in;
-        System.out.print("pwd: ");
-        in = scanner.nextLine();
+        Console cnsl = System.console();
+        String pwd = new String(cnsl.readPassword("pwd: "));
+        in = pwd;
         details[2] = in;
         System.out.print("city: ");
         in = scanner.nextLine();
