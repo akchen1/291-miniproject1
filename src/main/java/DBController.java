@@ -482,4 +482,37 @@ public class DBController {
             throw new RuntimeException("QUERY FAILED", throwables);
         }
     }
+    public String[] getEditables(String pid) {
+    	String[] data = new String[2];
+    	String getEditablesQuery=
+    			"select title, body from posts where pid like ?";
+    	try(PreparedStatement getEditablesStatement = conn.prepareStatement(getEditablesQuery)){
+    		getEditablesStatement.setString(1, pid);
+    		ResultSet res = getEditablesStatement.executeQuery();
+    		if(res.next()) {
+    			data[0] = res.getString(1);
+    			data[1] = res.getString(2);
+    			res.close();
+    			return data;
+    		}
+    		res.close();
+    	}catch (SQLException throwables) {
+    		throwables.printStackTrace();
+    		throw new RuntimeException("QUERY FAILED", throwables);
+    	}
+    	return data;
+    }
+    public void updateEditables(String pid, String[] editables) {
+    	String updateEditablesQuery = 
+    			"update posts set title=?, body=? where pid like ?";
+    	try(PreparedStatement updateEditablesStatement = conn.prepareStatement(updateEditablesQuery)){
+    		updateEditablesStatement.setString(1, editables[0]);
+    		updateEditablesStatement.setString(2, editables[1]);
+    		updateEditablesStatement.setString(3, pid);
+    		updateEditablesStatement.executeUpdate();
+    	} catch (SQLException throwables) {
+    		throwables.printStackTrace();
+    		throw new RuntimeException("Query FAILED", throwables);
+    	}
+    }
 }

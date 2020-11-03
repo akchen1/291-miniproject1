@@ -95,7 +95,7 @@ public class Main {
             } else if (input.toLowerCase().compareTo("s") == 0) {
                 System.out.println("Enter the id of the post you want to select");
                 String post = scanner.nextLine();
-                if (searchResults.stream().anyMatch((searchResult -> { if(searchResult.pid.toLowerCase().compareTo(post) == 0) {
+                if (searchResults.stream().anyMatch((searchResult -> { if(searchResult.pid.toLowerCase().compareTo(post.toLowerCase()) == 0) {
                     selectedPost.selectPost(searchResult.pid, searchResult.poster);
                     return true;
                 } return false;}))) {
@@ -227,8 +227,41 @@ public class Main {
             return;
         }
     }
-    public void editPost() {}
-
+    public void editPost() {
+    	if(selectedPost.pid == null) {
+    		System.out.println("You never selected a valid post! Please search first");
+    	}
+    	System.out.println("Edit the title or body of the selected post");
+    	String[] editables = dbController.getEditables(selectedPost.pid);
+    	while(true) {
+        	System.out.println("Title: "+editables[0]);
+        	System.out.println("Body: "+editables[1]);
+    		System.out.println("Do you want to edit the title or the body?");
+    		System.out.println("title - t");
+    		System.out.println("body - b");
+    		System.out.println("exit - e");
+    		System.out.print("cmd: ");
+    		String in = scanner.nextLine();
+    		if (in.compareTo("t")==0) {
+    			System.out.print("Enter the new title: ");
+    			in = scanner.nextLine();
+    			editables[0] = in;
+    		}
+    		else if(in.compareTo("b")==0) {
+    			System.out.print("Enter the new body: ");
+    			in = scanner.nextLine();
+    			editables[1] = in;
+    		}
+    		else if(in.compareTo("e")==0) {
+    			System.out.println("exiting");
+    			dbController.updateEditables(selectedPost.pid, editables);
+    			return;
+    		}
+    		else {
+    			System.out.println("Invalid command");
+    		}
+    	}
+    }
     /**
      * Return true for successful login, false for failure
      * Can also return uid if that's more convenient for future
