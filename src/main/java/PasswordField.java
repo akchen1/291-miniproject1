@@ -8,10 +8,11 @@ public class PasswordField {
 	    */
 	   public static String readPassword (String prompt) {
 	      EraserThread et = new EraserThread(prompt);
-	      Thread mask = new Thread(et);
-	      mask.start();
+		  Thread mask = new Thread(et);
+		  
 
-	      BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		  BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		  mask.start();
 	      String password = "";
 
 	      try {

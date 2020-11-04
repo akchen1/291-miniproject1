@@ -1,3 +1,4 @@
+import java.util.concurrent.TimeUnit;
 
 class EraserThread implements Runnable {
 	   private boolean stop;
@@ -13,16 +14,16 @@ class EraserThread implements Runnable {
 	    * Begin masking...display asterisks (*)
 	    */
 	   public void run () {
-	      stop = true;
+		  stop = true;
 	      while (stop) {
-	         System.out.print("\010*");
+			System.out.print("\010 ");
+		  }
 	     try {
 	        Thread.currentThread().sleep(1);
 	         } catch(InterruptedException ie) {
 	            ie.printStackTrace();
-	         }
-	      }
-	   }
+			 }
+		}
 
 	   /**
 	    * Instruct the thread to stop masking
