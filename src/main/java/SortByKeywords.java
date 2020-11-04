@@ -5,6 +5,7 @@ import java.util.Map;
 public class SortByKeywords implements Comparator<SearchResult> {
     String[] keywords;
     Map<String, ArrayList<String>> tags;
+
     public SortByKeywords(String[] keywords, Map<String, ArrayList<String>> tags) {
         this.keywords = keywords;
         this.tags = tags;

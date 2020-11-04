@@ -5,21 +5,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
-import java.io.Console;
 
+/**
+ * A class that handles main UI operations and invokes functions
+ */
 public class Main {
-    private final DBController dbController;
     static Scanner scanner = new Scanner(System.in);
-
+    final HashMap<String, Method> cmds;
+    private final DBController dbController;
     private boolean pUser = false;
     private String currentUserUID;
-    private Post selectedPost = new Post();
+    private final Post selectedPost = new Post();
 
-    final HashMap<String, Method> cmds;
-
-    public Main() throws NoSuchMethodException {
-        dbController = new DBController();
-        cmds = new HashMap<String, Method>(){{
+    public Main(String dbName) throws NoSuchMethodException {
+        dbController = new DBController(dbName);
+        cmds = new HashMap<String, Method>() {{ // initialize the commands into hashmap of methods
             put("p", Main.class.getMethod("postQuestion"));
             put("s", Main.class.getMethod("searchPost"));
             put("a", Main.class.getMethod("answerPost"));
@@ -32,9 +32,31 @@ public class Main {
         }};
     }
 
-    // TODO ALL THESE FUNCTIONS NEED TO DO THE LOGIC INDICATED
-    // TODO : REMEMBER TO CHECK STRING LENGTH SO YOU CAN MAKE VALID QUERY
-    // TODO : OR A VALID ENTRY
+    public static void main(String[] args) {
+        System.out.println(StringConstants.LOGO);
+        Main mainView = null;
+        String dbName;
+        if (args == null || args.length < 1 || args[0] == null) { // check if the file exists
+            System.out.println("NO DB PROVIDED, please provide db in CLI args");
+            return;
+        }
+
+        dbName = args[0];
+        try {
+            mainView = new Main(dbName);        // mainview object that handles ui/ux parsing
+        } catch (NoSuchMethodException e) {
+            System.out.println("One of the methods is invalid in the HashMap");
+            e.printStackTrace();
+        }
+        assert mainView != null;
+        mainView.show();
+        System.out.println();
+        System.out.println(StringConstants.EXIT_MESSAGE);
+    }
+
+    /**
+     * posts a question
+     */
     public void postQuestion() {
         System.out.print("Enter a title: ");
         String title = scanner.nextLine();
@@ -43,17 +65,21 @@ public class Main {
 
         String genPid = Utils.generateID(4);
         Post checkPost = dbController.getPost(genPid);
-        while(checkPost != null) {
+        while (checkPost != null) {
             genPid = Utils.generateID(4);
             checkPost = dbController.getPost(genPid);
         }
 
         Date date = Utils.getSQLDate();
         Boolean status = dbController.postQuestion(Utils.generateID(4), date, title, body, currentUserUID);
-        // TODO what to do if fail
         System.out.println("Thanks for posting your question!");
     }
 
+    /**
+     * iterates through the search results
+     * @param iterator
+     * @return
+     */
     private Iterator printSearch(Iterator iterator) {
         int counter = 0;
         while (iterator.hasNext()) {
@@ -66,6 +92,9 @@ public class Main {
         return iterator;
     }
 
+    /**
+     *  finds a post based on keywords
+     */
     public void searchPost() {
         System.out.print("Search Keywords: ");
         String keywords = scanner.nextLine();
@@ -97,10 +126,13 @@ public class Main {
             } else if (input.toLowerCase().compareTo("s") == 0) {
                 System.out.println("Enter the id of the post you want to select");
                 String post = scanner.nextLine();
-                if (searchResults.stream().anyMatch((searchResult -> { if(searchResult.pid.toLowerCase().compareTo(post.toLowerCase()) == 0) {
-                    selectedPost.selectPost(searchResult.pid, searchResult.poster);
-                    return true;
-                } return false;}))) {
+                if (searchResults.stream().anyMatch((searchResult -> {
+                    if (searchResult.pid.toLowerCase().compareTo(post.toLowerCase()) == 0) {
+                        selectedPost.selectPost(searchResult.pid, searchResult.poster);
+                        return true;
+                    }
+                    return false;
+                }))) {
                     System.out.println(post + " Selected");
                     return;
                 } else {
@@ -113,8 +145,11 @@ public class Main {
         }
     }
 
+    /**
+     * answers a post, select post must be a question
+     */
     public void answerPost() {
-        if(selectedPost.pid == null) {
+        if (selectedPost.pid == null) {
             System.out.println("You never selected a valid post! Please search first");
             return;
         }
@@ -127,7 +162,7 @@ public class Main {
         // check if post exists
         String genPid = Utils.generateID(4);
         Post checkPost = dbController.getPost(genPid);
-        while(checkPost != null) {
+        while (checkPost != null) {
             genPid = Utils.generateID(4);
             checkPost = dbController.getPost(genPid);
         }
@@ -136,15 +171,18 @@ public class Main {
         System.out.println("Successful post thanks for answering the question!");
     }
 
+    /**
+     * upvote on the selected post
+     */
     public void vote() {
         // vote increments from the earliest vote recv.
-        if(dbController.checkVoted(selectedPost.pid, currentUserUID)) {
+        if (dbController.checkVoted(selectedPost.pid, currentUserUID)) {
             System.out.println("Cannot give vote because you already have given your vote to " + selectedPost.pid);
             return;
         }
 
         int largestVno = dbController.getLargestVno(selectedPost.pid);
-        dbController.giveVote(selectedPost.pid, largestVno+1, currentUserUID);
+        dbController.giveVote(selectedPost.pid, largestVno + 1, currentUserUID);
 
         System.out.println("Thanks for casting your vote!~");
     }
@@ -152,11 +190,12 @@ public class Main {
     public void help() {
         System.out.println();
         System.out.println(StringConstants.INTRO);
-        if(pUser)
+        if (pUser)
             System.out.println(StringConstants.P_INTRO);
     }
+
     public void markAccepted() {
-        if(selectedPost.pid == null) {
+        if (selectedPost.pid == null) {
             System.out.println("You never selected a valid post! Please search first");
             return;
         } else if (!dbController.checkIsAnswer(selectedPost.pid)) {
@@ -165,15 +204,15 @@ public class Main {
         }
 
         String[] qDetails = dbController.getAcceptedAnswer(selectedPost.pid);
-        if(qDetails[0] == null) {
+        if (qDetails[0] == null) {
             System.out.println("Something went wrong when finding the question");
             return;
         }
 
-        if(qDetails[1] != null) {
+        if (qDetails[1] != null) {
             System.out.println("Do you want to override the current accepted answer of " + qDetails[1] + " (enter n to decline)");
             String in = scanner.nextLine();
-            if(in.compareTo("n") == 0 || in.compareTo("no") == 0) {
+            if (in.compareTo("n") == 0 || in.compareTo("no") == 0) {
                 System.out.println("Rejected the change of the accepted answer");
                 return;
             }
@@ -186,21 +225,20 @@ public class Main {
     // badge name case insensitive
     // *** REQUIRES SELECTED POST TO BE NOT NULL or EMPTY ***
     public void giveBadge() {
-        if(selectedPost.pid == null) {
+        if (selectedPost.pid == null) {
             System.out.println("You never selected a valid post! Please search first");
             return;
         }
         System.out.println("Give a user a badge by giving a proper badge name");
         String bname;
-        while(true) {
+        while (true) {
             System.out.print("Badge name: ");
             String in = scanner.nextLine();
             bname = dbController.getBadge(in);
-            if(bname == null) {
+            if (bname == null) {
                 System.out.println("Exists no such badge :(");
                 continue;
-            }
-            else if(!dbController.checkUniqueBadge(bname, selectedPost.owner)) {
+            } else if (!dbController.checkUniqueBadge(bname, selectedPost.owner)) {
                 System.out.println("That badge has been given to this user today already!");
                 continue;
             }
@@ -209,17 +247,18 @@ public class Main {
 
         dbController.giveBadge(bname, selectedPost.owner);
     }
+
     public void tag() {
-        if(selectedPost.pid == null) {
+        if (selectedPost.pid == null) {
             System.out.println("You never selected a valid post! Please search first!");
             return;
         }
         System.out.println("Give selected post a tag!");
-        while(true) {
+        while (true) {
             System.out.print("Tag: ");
             String in = scanner.nextLine();
 
-            if(dbController.existsTag(selectedPost.pid, in)) {
+            if (dbController.existsTag(selectedPost.pid, in)) {
                 System.out.println("Already exists this tag for this post, enter another");
                 continue;
             } else {
@@ -229,48 +268,47 @@ public class Main {
             return;
         }
     }
+
     public void editPost() {
-    	if(selectedPost.pid == null) {
-    		System.out.println("You never selected a valid post! Please search first");
-    	}
-    	System.out.println("Edit the title or body of the selected post");
-    	String[] editables = dbController.getEditables(selectedPost.pid);
-    	while(true) {
-        	System.out.println("Title: "+editables[0]);
-        	System.out.println("Body: "+editables[1]);
-    		System.out.println("Do you want to edit the title or the body?");
-    		System.out.println("title - t");
-    		System.out.println("body - b");
-    		System.out.println("exit - e");
-    		System.out.print("cmd: ");
-    		String in = scanner.nextLine();
-    		if (in.compareTo("t")==0) {
-    			System.out.print("Enter the new title: ");
-    			in = scanner.nextLine();
-    			editables[0] = in;
-    		}
-    		else if(in.compareTo("b")==0) {
-    			System.out.print("Enter the new body: ");
-    			in = scanner.nextLine();
-    			editables[1] = in;
-    		}
-    		else if(in.compareTo("e")==0) {
-    			System.out.println("exiting");
-    			dbController.updateEditables(selectedPost.pid, editables);
-    			return;
-    		}
-    		else {
-    			System.out.println("Invalid command");
-    		}
-    	}
+        if (selectedPost.pid == null) {
+            System.out.println("You never selected a valid post! Please search first");
+        }
+        System.out.println("Edit the title or body of the selected post");
+        String[] editables = dbController.getEditables(selectedPost.pid);
+        while (true) {
+            System.out.println("Title: " + editables[0]);
+            System.out.println("Body: " + editables[1]);
+            System.out.println("Do you want to edit the title or the body?");
+            System.out.println("title - t");
+            System.out.println("body - b");
+            System.out.println("exit - e");
+            System.out.print("cmd: ");
+            String in = scanner.nextLine();
+            if (in.compareTo("t") == 0) {
+                System.out.print("Enter the new title: ");
+                in = scanner.nextLine();
+                editables[0] = in;
+            } else if (in.compareTo("b") == 0) {
+                System.out.print("Enter the new body: ");
+                in = scanner.nextLine();
+                editables[1] = in;
+            } else if (in.compareTo("e") == 0) {
+                System.out.println("exiting");
+                dbController.updateEditables(selectedPost.pid, editables);
+                return;
+            } else {
+                System.out.println("Invalid command");
+            }
+        }
     }
+
     /**
      * Return true for successful login, false for failure
      * Can also return uid if that's more convenient for future
      * Also needs to check if the user is privilege
+     *
      * @return
      */
-    // TODO HIDE PASSWORD IN LOGIN
     public boolean attemptLogin() {
         System.out.println("Please login by entering your username, you will be prompted for your password after");
         System.out.print("UID: ");
@@ -281,7 +319,7 @@ public class Main {
         Console cnsl = System.console();
         String pwd = PasswordField.readPassword("PASSWORD: ");
         String dbPwd = dbController.getPwd(uid);
-        if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
+        if (dbPwd == null || dbPwd.compareTo(pwd) != 0) {
             System.out.println(StringConstants.INVALID_CREDS);
             System.out.println();
             return false;
@@ -295,18 +333,17 @@ public class Main {
     /**
      * Registers a user
      */
-    // TODO HIDE PASSWORD IN REGISTER
     public void registerUser() {
         System.out.println("Please provide a uid. Uids must be 4 chars long and are case-insensitive");
         String in;
         // order of uid, name, city, pwd
         String[] details = new String[4];
 
-        while(true) {
+        while (true) {
             System.out.print("UID: ");
             in = scanner.nextLine();
             in = in.toLowerCase();
-            if(in.length() > 0 && in.length() < 5 && dbController.getUid(in) == null) {
+            if (in.length() > 0 && in.length() < 5 && dbController.getUid(in) == null) {
                 break;
             }
             System.out.println("Unfortunately that uid is invalid :( please try another");
@@ -332,13 +369,13 @@ public class Main {
         String in;
         System.out.println(StringConstants.LOGIN_MENU);
 
-        while(true) {
+        while (true) {
             System.out.print("cmd: ");
             in = scanner.nextLine();
-            if(in.compareTo("l") == 0) {
-                while(!attemptLogin());
+            if (in.compareTo("l") == 0) {
+                while (!attemptLogin()) ;
                 return;
-            } else if(in.compareTo("s") == 0) {
+            } else if (in.compareTo("s") == 0) {
                 registerUser();
                 return;
             }
@@ -348,34 +385,30 @@ public class Main {
     public void show() {
         loginMenu();
 
-        // TODO DELETE AFTER
-//        selectedPost.selectPost("p001", "mid1");
-
         System.out.println();
         System.out.println(StringConstants.INTRO);
-        if(pUser)
+        if (pUser)
             System.out.println(StringConstants.P_INTRO);
 
         String in;
-        while(true) {   // main functional loop
+        while (true) {   // main functional loop
             System.out.print("cmd: ");
             in = scanner.nextLine(); // wait for input
-            // TODO: ONLY PERMITTED HERE SHOULD BE ps because you need to
-            // TODO: search or make a post
-            if(parseInput(in, StringConstants.ALL_ACTIONS)) // only allow psm for this menu
+            if (parseInput(in, StringConstants.ALL_ACTIONS)) // only allow psm for this menu
                 break;
         }
     }
 
     /**
      * return true if you want to exit the program false otherwise
+     *
      * @param in
      * @param permitted a list of permitted letters for this input
      * @return
      */
     public boolean parseInput(String in, String permitted) {
         // invalid input or cannot use the command
-        if(in == null) {
+        if (in == null) {
             System.out.println(StringConstants.INVALID_INPUT);
             return false;
         } else if (in.compareTo("exit") == 0) {
@@ -383,17 +416,18 @@ public class Main {
         } else if (in.compareTo("<") == 0) {
             return false;
         } else if (in.compareTo("help") == 0) { // always allowed
-        } if (!permitted.contains(in)) {
+        }
+        if (!permitted.contains(in)) {
             System.out.println(StringConstants.INVALID_INPUT);
             return false;
-        } else if(!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
+        } else if (!pUser && StringConstants.PRIVILEGED_CMDS.contains(in)) {
             System.out.println(StringConstants.INVALID_PRIVILEGE);
             return false;
         }
 
         // get method from map
         Method m = cmds.get(in);
-        if(m == null) {
+        if (m == null) {
             System.out.println(StringConstants.INVALID_INPUT);
             return false;
         }
@@ -409,21 +443,6 @@ public class Main {
         }
 
         return false;
-    }
-
-    public static void main(String[] args) {
-        System.out.println(StringConstants.LOGO);
-        Main mainView = null;
-        try {
-            mainView = new Main();
-        } catch (NoSuchMethodException e) {
-            System.out.println("One of the methods is invalid in the HashMap");
-            e.printStackTrace();
-        }
-        assert mainView != null;
-        mainView.show();
-        System.out.println();
-        System.out.println(StringConstants.EXIT_MESSAGE);
     }
 
 }

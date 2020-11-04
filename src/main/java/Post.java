@@ -4,7 +4,8 @@ public class Post {
     public boolean selected;
 
     // Object to store post so it's easier to do selections on it
-    public Post() {}
+    public Post() {
+    }
 
     public Post(String pid, String owner) {
         this.pid = pid;

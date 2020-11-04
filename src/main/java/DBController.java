@@ -1,17 +1,19 @@
 import java.sql.*;
-import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DBController {
     private final String driverName = "org.sqlite.JDBC";
-    private final String dbUrl = "jdbc:sqlite:sql/database.db";
     Connection conn;
     SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+    private String dbUrl = "jdbc:sqlite:%s";
 
-    public DBController() {
+    public DBController(String dbName) {
+        dbUrl = String.format(dbUrl, dbName);
         try {
             Class.forName(driverName);
             conn = DriverManager.getConnection(dbUrl);
@@ -25,6 +27,7 @@ public class DBController {
     /**
      * Get pwd given the uid
      * return null if not found
+     *
      * @param uid
      */
     public String getPwd(String uid) {
@@ -32,10 +35,10 @@ public class DBController {
                 "select pwd from users where uid like ?";
         String pwd = null;
 
-        try(PreparedStatement pwdStatement = conn.prepareStatement(pwdQueryString)) {
+        try (PreparedStatement pwdStatement = conn.prepareStatement(pwdQueryString)) {
             pwdStatement.setString(1, uid);
             ResultSet res = pwdStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 pwd = res.getString(1);
             }
             res.close();
@@ -49,6 +52,7 @@ public class DBController {
 
     /**
      * Returns null if no such uid exists
+     *
      * @param uid
      * @return
      */
@@ -57,10 +61,10 @@ public class DBController {
                 "select uid from users where uid like ?";
         String resId = null;
 
-        try(PreparedStatement pwdStatement = conn.prepareStatement(uidQueryString)) {
+        try (PreparedStatement pwdStatement = conn.prepareStatement(uidQueryString)) {
             pwdStatement.setString(1, uid);
             ResultSet res = pwdStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 resId = res.getString(1);
             }
             res.close();
@@ -95,10 +99,10 @@ public class DBController {
 
         String retId;
 
-        try(PreparedStatement pwdStatement = conn.prepareStatement(checkPrivilegedQueryString)) {
+        try (PreparedStatement pwdStatement = conn.prepareStatement(checkPrivilegedQueryString)) {
             pwdStatement.setString(1, uid);
             ResultSet res = pwdStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 retId = res.getString(1);
             } else {
                 return false;
@@ -116,7 +120,7 @@ public class DBController {
         String insertPostsQuery = "INSERT INTO posts values(?, ?, ?, ?, ?);";
         String insertQuestionsQuery = "INSERT INTO questions values(?, ?);";
         try (PreparedStatement insertPostsStatement = conn.prepareStatement(insertPostsQuery);
-            PreparedStatement insertQuestionsStatement = conn.prepareStatement(insertQuestionsQuery)) {
+             PreparedStatement insertQuestionsStatement = conn.prepareStatement(insertQuestionsQuery)) {
             insertPostsStatement.setString(1, pid);
             insertPostsStatement.setDate(2, date);
             insertPostsStatement.setString(3, title);
@@ -125,7 +129,6 @@ public class DBController {
             insertQuestionsStatement.setString(1, pid);
             insertQuestionsStatement.setString(2, null);
 
-            // TODO maybe merge statements so both need to pass for it to work look into rollback
             Boolean result1 = insertPostsStatement.execute();
             Boolean result2 = insertQuestionsStatement.execute();
             return result1 && result2;
@@ -149,7 +152,6 @@ public class DBController {
             insertAnswerStatement.setString(1, apid);
             insertAnswerStatement.setString(2, qPid);
 
-            // TODO maybe merge statements so both need to pass for it to work look into rollback
             Boolean result1 = insertPostStatement.execute();
             Boolean result2 = insertAnswerStatement.execute();
             return result1 && result2;
@@ -181,11 +183,11 @@ public class DBController {
             int j = 1;
             searchStatement.setString(j, keywords[0]);
             for (int i = 0; i < keywords.length; i++) {
-                searchStatement.setString(j, "%"+keywords[i]+"%");
+                searchStatement.setString(j, "%" + keywords[i] + "%");
                 j++;
-                searchStatement.setString(j, "%"+keywords[i]+"%");
+                searchStatement.setString(j, "%" + keywords[i] + "%");
                 j++;
-                searchStatement.setString(j, "%"+keywords[i]+"%");
+                searchStatement.setString(j, "%" + keywords[i] + "%");
                 j++;
             }
 
@@ -239,10 +241,10 @@ public class DBController {
                 "select * from posts where pid like ?";
         Post post = null;
 
-        try(PreparedStatement badgeStatement = conn.prepareStatement(getPostQuery)) {
+        try (PreparedStatement badgeStatement = conn.prepareStatement(getPostQuery)) {
             badgeStatement.setString(1, pid);
             ResultSet res = badgeStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 post = new Post(res.getString(1), res.getString(5));
             }
             res.close();
@@ -257,6 +259,7 @@ public class DBController {
     /**
      * Checks if the badge exists, returns null if no such badge
      * else return the badge name
+     *
      * @param bname
      * @return
      */
@@ -265,10 +268,10 @@ public class DBController {
                 "select bname from badges where bname like ?";
         String badge = null;
 
-        try(PreparedStatement badgeStatement = conn.prepareStatement(getBadgeQuery)) {
+        try (PreparedStatement badgeStatement = conn.prepareStatement(getBadgeQuery)) {
             badgeStatement.setString(1, bname);
             ResultSet res = badgeStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 badge = res.getString(1);
             }
             res.close();
@@ -285,7 +288,7 @@ public class DBController {
                 "insert into ubadges values(?, ?, ?)";
 
         Date date = new Date(Calendar.getInstance().getTime().getTime());
-        try(PreparedStatement badgeStatement = conn.prepareStatement(giveBadgeQuery)) {
+        try (PreparedStatement badgeStatement = conn.prepareStatement(giveBadgeQuery)) {
             badgeStatement.setString(1, uid);
             badgeStatement.setString(2, dateFormatter.format(date));
             badgeStatement.setString(3, bname);
@@ -301,7 +304,7 @@ public class DBController {
                 "insert into votes values(?, ?, ?, ?)";
 
         Date date = new Date(Calendar.getInstance().getTime().getTime());
-        try(PreparedStatement badgeStatement = conn.prepareStatement(giveVoteQuery)) {
+        try (PreparedStatement badgeStatement = conn.prepareStatement(giveVoteQuery)) {
             badgeStatement.setString(1, pid);
             badgeStatement.setInt(2, vno);
             badgeStatement.setString(3, dateFormatter.format(date));
@@ -318,12 +321,12 @@ public class DBController {
                 "select * from ubadges where uid like ? and bdate like ? and bname like ?";
 
         Date date = new Date(Calendar.getInstance().getTime().getTime());
-        try(PreparedStatement badgeStatement = conn.prepareStatement(checkBadgeQuery)) {
+        try (PreparedStatement badgeStatement = conn.prepareStatement(checkBadgeQuery)) {
             badgeStatement.setString(1, uid);
             badgeStatement.setString(2, dateFormatter.format(date));
             badgeStatement.setString(3, bname);
             ResultSet res = badgeStatement.executeQuery();
-            if(res.next()) {    // exists entry
+            if (res.next()) {    // exists entry
                 System.out.println("this has smth");
                 res.close();
                 return false;
@@ -343,10 +346,10 @@ public class DBController {
                 "select vno from votes where pid like ? order by vno desc";
         int maxVno = 0;
 
-        try(PreparedStatement voteStatement = conn.prepareStatement(getVnoQuery)) {
+        try (PreparedStatement voteStatement = conn.prepareStatement(getVnoQuery)) {
             voteStatement.setString(1, pid);
             ResultSet res = voteStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 maxVno = res.getInt(1);
             }
             res.close();
@@ -360,6 +363,7 @@ public class DBController {
 
     /**
      * Return true if you have voted on this post with uid
+     *
      * @param pid
      * @param uid
      * @return
@@ -368,11 +372,11 @@ public class DBController {
         String getVoteMatchQuery =
                 "select * from votes where pid like ? and uid like ?";
 
-        try(PreparedStatement voteStatement = conn.prepareStatement(getVoteMatchQuery)) {
+        try (PreparedStatement voteStatement = conn.prepareStatement(getVoteMatchQuery)) {
             voteStatement.setString(1, pid);
             voteStatement.setString(2, uid);
             ResultSet res = voteStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 res.close();
                 return true;
             }
@@ -387,6 +391,7 @@ public class DBController {
 
     /**
      * Check if tag exists on the pid
+     *
      * @param tag
      * @param pid
      * @return
@@ -395,7 +400,7 @@ public class DBController {
         String pushTagQuery =
                 "INSERT INTO tags values(?, ?)";
 
-        try(PreparedStatement existTagStatement = conn.prepareStatement(pushTagQuery)) {
+        try (PreparedStatement existTagStatement = conn.prepareStatement(pushTagQuery)) {
             existTagStatement.setString(1, pid);
             existTagStatement.setString(2, tag);
             existTagStatement.execute();
@@ -409,11 +414,11 @@ public class DBController {
         String getTagQuery =
                 "select * from tags where pid like ? and tag like ?";
 
-        try(PreparedStatement voteStatement = conn.prepareStatement(getTagQuery)) {
+        try (PreparedStatement voteStatement = conn.prepareStatement(getTagQuery)) {
             voteStatement.setString(1, pid);
             voteStatement.setString(2, tag);
             ResultSet res = voteStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 res.close();
                 return true;
             }
@@ -430,10 +435,10 @@ public class DBController {
         String getAnswerQuery =
                 "select * from answers where pid like ?";
 
-        try(PreparedStatement checkAnswerStatement = conn.prepareStatement(getAnswerQuery)) {
+        try (PreparedStatement checkAnswerStatement = conn.prepareStatement(getAnswerQuery)) {
             checkAnswerStatement.setString(1, pid);
             ResultSet res = checkAnswerStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 res.close();
                 return true;
             }
@@ -452,10 +457,10 @@ public class DBController {
         String[] data = new String[2];
         String getAcceptedAnswerQuery =
                 "select * from questions, answers where answers.pid like ? and answers.qid=questions.pid;";
-        try(PreparedStatement acceptedAnswerStatement = conn.prepareStatement(getAcceptedAnswerQuery)) {
+        try (PreparedStatement acceptedAnswerStatement = conn.prepareStatement(getAcceptedAnswerQuery)) {
             acceptedAnswerStatement.setString(1, pid);
             ResultSet res = acceptedAnswerStatement.executeQuery();
-            if(res.next()) {
+            if (res.next()) {
                 data[0] = res.getString(1);
                 data[1] = res.getString(2);
                 res.close();
@@ -473,7 +478,7 @@ public class DBController {
     public void updateQuestion(String qid, String theaid) {
         String updateQuestionQuery =
                 "update questions set theaid=? where pid like ?";
-        try(PreparedStatement updateQuestionStatement = conn.prepareStatement(updateQuestionQuery)) {
+        try (PreparedStatement updateQuestionStatement = conn.prepareStatement(updateQuestionQuery)) {
             updateQuestionStatement.setString(1, theaid);
             updateQuestionStatement.setString(2, qid);
             updateQuestionStatement.executeUpdate();
@@ -482,37 +487,39 @@ public class DBController {
             throw new RuntimeException("QUERY FAILED", throwables);
         }
     }
+
     public String[] getEditables(String pid) {
-    	String[] data = new String[2];
-    	String getEditablesQuery=
-    			"select title, body from posts where pid like ?";
-    	try(PreparedStatement getEditablesStatement = conn.prepareStatement(getEditablesQuery)){
-    		getEditablesStatement.setString(1, pid);
-    		ResultSet res = getEditablesStatement.executeQuery();
-    		if(res.next()) {
-    			data[0] = res.getString(1);
-    			data[1] = res.getString(2);
-    			res.close();
-    			return data;
-    		}
-    		res.close();
-    	}catch (SQLException throwables) {
-    		throwables.printStackTrace();
-    		throw new RuntimeException("QUERY FAILED", throwables);
-    	}
-    	return data;
+        String[] data = new String[2];
+        String getEditablesQuery =
+                "select title, body from posts where pid like ?";
+        try (PreparedStatement getEditablesStatement = conn.prepareStatement(getEditablesQuery)) {
+            getEditablesStatement.setString(1, pid);
+            ResultSet res = getEditablesStatement.executeQuery();
+            if (res.next()) {
+                data[0] = res.getString(1);
+                data[1] = res.getString(2);
+                res.close();
+                return data;
+            }
+            res.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("QUERY FAILED", throwables);
+        }
+        return data;
     }
+
     public void updateEditables(String pid, String[] editables) {
-    	String updateEditablesQuery = 
-    			"update posts set title=?, body=? where pid like ?";
-    	try(PreparedStatement updateEditablesStatement = conn.prepareStatement(updateEditablesQuery)){
-    		updateEditablesStatement.setString(1, editables[0]);
-    		updateEditablesStatement.setString(2, editables[1]);
-    		updateEditablesStatement.setString(3, pid);
-    		updateEditablesStatement.executeUpdate();
-    	} catch (SQLException throwables) {
-    		throwables.printStackTrace();
-    		throw new RuntimeException("Query FAILED", throwables);
-    	}
+        String updateEditablesQuery =
+                "update posts set title=?, body=? where pid like ?";
+        try (PreparedStatement updateEditablesStatement = conn.prepareStatement(updateEditablesQuery)) {
+            updateEditablesStatement.setString(1, editables[0]);
+            updateEditablesStatement.setString(2, editables[1]);
+            updateEditablesStatement.setString(3, pid);
+            updateEditablesStatement.executeUpdate();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            throw new RuntimeException("Query FAILED", throwables);
+        }
     }
 }
