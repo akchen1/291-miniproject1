@@ -212,7 +212,7 @@ public class DBController {
                 searchResults.add(new SearchResult(pid, date, title, body, poster, numAns, numVote));
             }
             result.close();
-            String searchTags = "SELECT * FROM tags;";  // might change later to in (pids)
+            String searchTags = "SELECT * FROM tags;";
             PreparedStatement statement = conn.prepareStatement(searchTags);
             ResultSet resultTags = statement.executeQuery();
             while (resultTags.next()) {
@@ -241,9 +241,9 @@ public class DBController {
                 "select * from posts where pid like ?";
         Post post = null;
 
-        try (PreparedStatement badgeStatement = conn.prepareStatement(getPostQuery)) {
-            badgeStatement.setString(1, pid);
-            ResultSet res = badgeStatement.executeQuery();
+        try (PreparedStatement postStatement = conn.prepareStatement(getPostQuery)) {
+            postStatement.setString(1, pid);
+            ResultSet res = postStatement.executeQuery();
             if (res.next()) {
                 post = new Post(res.getString(1), res.getString(5));
             }
@@ -304,12 +304,12 @@ public class DBController {
                 "insert into votes values(?, ?, ?, ?)";
 
         Date date = new Date(Calendar.getInstance().getTime().getTime());
-        try (PreparedStatement badgeStatement = conn.prepareStatement(giveVoteQuery)) {
-            badgeStatement.setString(1, pid);
-            badgeStatement.setInt(2, vno);
-            badgeStatement.setString(3, dateFormatter.format(date));
-            badgeStatement.setString(4, voteGiver);
-            return badgeStatement.execute();
+        try (PreparedStatement voteStatement = conn.prepareStatement(giveVoteQuery)) {
+            voteStatement.setString(1, pid);
+            voteStatement.setInt(2, vno);
+            voteStatement.setString(3, dateFormatter.format(date));
+            voteStatement.setString(4, voteGiver);
+            return voteStatement.execute();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
             throw new RuntimeException("Giving vote FAILED", throwables);
@@ -327,11 +327,9 @@ public class DBController {
             badgeStatement.setString(3, bname);
             ResultSet res = badgeStatement.executeQuery();
             if (res.next()) {    // exists entry
-                System.out.println("this has smth");
                 res.close();
                 return false;
             } else {
-                System.out.println("no more");
                 res.close();
                 return true;
             }

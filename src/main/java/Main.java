@@ -175,6 +175,11 @@ public class Main {
      * upvote on the selected post
      */
     public void vote() {
+        if (selectedPost.pid == null) {
+            System.out.println("You never selected a valid post! Please search first");
+            return;
+        }
+
         // vote increments from the earliest vote recv.
         if (dbController.checkVoted(selectedPost.pid, currentUserUID)) {
             System.out.println("Cannot give vote because you already have given your vote to " + selectedPost.pid);
@@ -316,7 +321,6 @@ public class Main {
         String uid = scanner.nextLine();
         currentUserUID = uid;
 
-        Console cnsl = System.console();
         String pwd = PasswordField.readPassword("PASSWORD: ");
         String dbPwd = dbController.getPwd(uid);
         if (dbPwd == null || dbPwd.compareTo(pwd) != 0) {
