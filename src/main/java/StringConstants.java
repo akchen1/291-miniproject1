@@ -15,6 +15,7 @@ public abstract class StringConstants {
             "v - give a vote\n" +
             "h - view this help again\n" +
             "< - back, does not work if already on main menu\n" +
+            "l - logut\n" +
             "exit - logout\n";
 
     public static final String P_INTRO = "Hello Admin.\n" +
