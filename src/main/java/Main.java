@@ -415,6 +415,9 @@ public class Main {
             return true;
         } else if (in.compareTo("<") == 0) {
             return false;
+        }else if (in.compareTo("l") == 0) {
+            show();
+            return true;
         } else if (in.compareTo("help") == 0) { // always allowed
         }
         if (!permitted.contains(in)) {
