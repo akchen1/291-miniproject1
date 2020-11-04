@@ -279,7 +279,7 @@ public class Main {
         currentUserUID = uid;
 
         Console cnsl = System.console();
-        String pwd = new String(cnsl.readPassword("PASSWORD: ")); 
+        String pwd = PasswordField.readPassword("PASSWORD: ");
         String dbPwd = dbController.getPwd(uid);
         if(dbPwd == null || dbPwd.compareTo(pwd) != 0) {
             System.out.println(StringConstants.INVALID_CREDS);
@@ -317,8 +317,7 @@ public class Main {
         System.out.print("name: ");
         in = scanner.nextLine();
         details[1] = in;
-        Console cnsl = System.console();
-        String pwd = new String(cnsl.readPassword("pwd: "));
+        String pwd = PasswordField.readPassword("PASSWORD: ");
         in = pwd;
         details[2] = in;
         System.out.print("city: ");
